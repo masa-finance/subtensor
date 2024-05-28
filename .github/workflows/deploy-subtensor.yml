@@ -1,4 +1,4 @@
-name: Build and Deploy to AWS App Runner
+name: Build and Deploy masa subtensor devnet
 
 on:
   push:
