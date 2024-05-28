@@ -19,5 +19,8 @@ RUN cargo build --release --features pow-faucet
 # Ensure the localnet.sh script is executable
 RUN chmod +x scripts/localnet.sh
 
+# Expose necessary ports
+EXPOSE 30333 9933 9944 9945 9946
+
 # Set the entry point to run the localnet.sh script
 ENTRYPOINT ["./scripts/localnet.sh"]
