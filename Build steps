@@ -1,0 +1,14 @@
+Build steps
+===========
+
+rustup update stable
+
+rustup override set stable
+
+rustup target add wasm32-unknown-unknown --toolchain stable-x86_64-apple-darwin
+
+cargo build --release or cargo build --dev
+
+chmod +x scripts/localnet.sh
+
+bash scripts/localnet.sh
