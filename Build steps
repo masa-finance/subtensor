@@ -7,8 +7,8 @@ rustup override set stable
 
 rustup target add wasm32-unknown-unknown --toolchain stable-x86_64-apple-darwin
 
-cargo build --release or cargo build --dev
+cargo build --release --features="pow-faucet"
 
 chmod +x scripts/localnet.sh
 
-bash scripts/localnet.sh
+BUILD_BINARY=0 ./scripts/localnet.sh
