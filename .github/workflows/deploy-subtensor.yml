@@ -1,0 +1,76 @@
+name: Build and Deploy masa subtensor devnet
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'src/**'
+      - 'Dockerfile.masa'
+      - 'package.json'
+      - '.github/workflows/deploy-subtensor.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: masa-subtensor
+
+jobs:
+  build-container:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_NUMBER }}:role/analytics-api-deploy
+          role-session-name: GitHubActions
+          web-identity-token-file: ${{ github.token_path }}
+          
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
+          
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          IMAGE_TAG: masa-subtensor-${{ github.sha }}
+          ENVIRONMENT: ${{ github.ref_name }}
+        run: |
+          docker buildx create --use
+          docker buildx build --file Dockerfile.masa --tag ${{ vars.AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG --tag ${{ vars.AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest --push .
+
+  deploy-app:
+    needs: build-container
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_NUMBER }}:role/analytics-api-deploy
+          role-session-name: GitHubActions
+          web-identity-token-file: ${{ github.token_path }}
+          
+      - name: Deploy to AWS App Runner
+        env:
+          SERVICE_NAME: masa-subtensor
+          ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG: masa-subtensor-${{ github.sha }}
+        run: |
+          aws apprunner create-service --service-name $SERVICE_NAME \
+            --source-configuration ImageRepositoryType="ECR",ImageIdentifier="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" || \
+          aws apprunner update-service --service-arn $(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text) \
+            --source-configuration ImageRepositoryType="ECR",ImageIdentifier="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
