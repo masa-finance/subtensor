@@ -30,3 +30,4 @@ jobs:
           file: ./Dockerfile.masa
           push: true
           tags: ghcr.io/${{ github.repository }}/masa-subtensor:latest
+          platforms: linux/amd64,linux/arm64/v8
