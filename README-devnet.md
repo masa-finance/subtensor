@@ -18,13 +18,16 @@ This command tells Docker to use `Dockerfile.masa` to build the image and tag it
 
 ## Running the Docker Container
 
-To run the Docker container, use the following command:
-
+To run the Docker container interactively:
 ```sh
 docker run -it --rm masa-subtensor
 ```
-
 This command starts a new container from the `masa-subtensor` image and runs it interactively. The `--rm` flag ensures that the container is removed after it stops.
+
+To run daemonized and expose needed ports:
+```sh
+docker run -d --name masa-subtensor -p 30333:30333 -p 9933:9933 -p 9944-9946 masa-subtensor
+```
 
 ## Summary of Commands
 
@@ -46,4 +49,3 @@ If you encounter any issues or have questions, please refer to the Docker docume
 
 ---
 
-This README provides basic instructions for building and running the Docker container for the Masa Subtensor Rust application. Make sure to update the README with any additional information specific to your application as needed.
