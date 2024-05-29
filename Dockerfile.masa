@@ -24,3 +24,7 @@ EXPOSE 30333 9933 9944 9945 9946
 
 # Set the entry point to run the localnet.sh script
 ENTRYPOINT ["./scripts/localnet.sh"]
+
+# usage example
+# sudo docker build -f Dockerfile.masa -t masa-subtensor .
+# sudo docker run -d --name masa-subtensor -p 30333:30333 -p 9933:9933 -p 9944-9946 masa-subtensor
